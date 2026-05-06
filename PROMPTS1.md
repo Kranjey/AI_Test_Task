@@ -683,12 +683,12 @@ public class UserDatabaseTest implements DatabaseAware {
 ```
 🎯 Итоговые рекомендации
 
-Для конфигурации:
+# Для конфигурации:
 1. Используйте иерархию: defaults → env-specific properties → env vars → CLI
 2. Сделайте конфигурацию type-safe с валидацией обязательных полей
 3. Храните секреты только в env vars / secret managers
 4. Документируйте все доступные параметры в README
-Для cleanup тестовых данных:
+# Для cleanup тестовых данных:
 1. Основной паттерн: AutoCloseable + try-with-resources
 2. Всегда генерируйте уникальные данные (timestamp/UUID)
 3. Добавляйте fallback cleanup @BeforeAll для "зомби-данных"
