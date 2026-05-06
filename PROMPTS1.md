@@ -380,8 +380,8 @@ src/test/resources/config/
 ├── staging.properties         # Staging environment
 └── prod.properties            # Production (если нужны smoke-тесты)
 ```
-# defaults.properties:
-
+defaults.properties:
+```bash
 # API
 api.base.url=http://localhost:8080
 api.timeout.seconds=30
@@ -395,14 +395,14 @@ ui.timeout.seconds=15
 # db.url=jdbc:postgresql://localhost:5432/testdb
 # db.user=test
 # db.password=test
-
+```
 ci.properties:
-
+```bash
 # Переопределяем для CI
 api.base.url=${API_BASE_URL:http://staging-api:8080}
 browser.headless=true
 browser.type=chrome
-
+```
 🚀 Использование в тестах
 // BaseTest.java
 ```java
@@ -590,6 +590,7 @@ public class TestCleanupService {
 }
 ```
 // В базовом тесте:
+```java
 public class BaseApiTest {
     
     protected static TestCleanupService cleanupService;
@@ -604,7 +605,7 @@ public class BaseApiTest {
         cleanupService.cleanupOrphanedData();
     }
 }
-
+```
 ✅ Уровень 4: Транзакции и rollback (для тестов с прямым доступом к БД)
 
 ```java
