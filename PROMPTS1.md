@@ -372,14 +372,15 @@ public class ConfigurationException extends RuntimeException {
 }
 ```
 📁 Структура файлов конфигурации
+```bash
 src/test/resources/config/
 ├── defaults.properties          # Базовые дефолты
 ├── local.properties           # Локальная разработка
 ├── ci.properties              # CI/CD окружение
 ├── staging.properties         # Staging environment
 └── prod.properties            # Production (если нужны smoke-тесты)
-
-defaults.properties:
+```
+# defaults.properties:
 
 # API
 api.base.url=http://localhost:8080
