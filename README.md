@@ -17,3 +17,6 @@ mvn test -Dparallel.tests=4
 
 # С кастомной конфигурацией
 BASE_URL=https://staging.example.com mvn test
+```
+### ИИ-агент
+Использовался Qwen3.6-Plus
