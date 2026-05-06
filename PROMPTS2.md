@@ -13,7 +13,7 @@
 - Идемпотентен: можно запускать многократно
 
 ### Ответ агента
-
+```java
 package tests;
 
 import org.junit.jupiter.api.Test;
@@ -59,6 +59,7 @@ public class UserFlowTest extends BaseTest {
                    "User should be removed from UI");
     }
 }
+```
 ### Оценка ответа
 Хорошо: Тест логически структурирован, использованы явные ожидания, уникальные данные через timestamp.
 Плохо:
@@ -79,6 +80,7 @@ public class UserFlowTest extends BaseTest {
 Исправь тест с учётом этих замечаний.
 
 ### Ответ агента
+```java
 package tests;
 
 import io.qameta.allure.Description;
@@ -158,7 +160,7 @@ public class UserFlowTest extends BaseTest {
         System.out.println("[TEST] Test completed successfully");
     }
 }
-
+```
 ### Оценка ответа
 
 Отлично исправлено:

@@ -1,4 +1,4 @@
-## Промпт 1
+Промпт 1
 
 Проведи детальный code review двух классов: `UserApiClient.java` и `BaseTest.java`. 
 Сфокусируйся на:
@@ -79,21 +79,24 @@ public class BaseTest {
         driver.quit();
     }
 }
-
+```
 ## Ответ агента
 
 🚨 Критические проблемы (Critical)
 1. Race condition в Singleton (UserApiClient.getInstance)
 // ❌ ПРОБЛЕМА: Небезопасный lazy initialization
+```java
 public static UserApiClient getInstance(String baseUrl) {
     if (instance == null) {  // ← Race condition здесь
         instance = new UserApiClient(baseUrl);
     }
     return instance;
 }
+```
 Уровень: Critical
 Почему проблема: При параллельном запуске тестов несколько потоков могут одновременно пройти проверку instance == null и создать разные экземпляры. Это нарушает инварианты теста и приводит к недетерминированному поведению.
 ✅ Решение: Отказаться от Singleton в тестах (рекомендуется) ИЛИ использовать thread-safe реализацию:
+```java
 // Вариант А: Отказ от Singleton (лучшая практика для тестов)
 public class UserApiClient {
     private final String baseUrl;
@@ -131,16 +134,20 @@ public class UserApiClient {
         return instance;
     }
 }
+```
 2. Shared mutable state (timeout field)
 // ❌ ПРОБЛЕМА: Изменяемое поле в разделяемом экземпляре
+```java
 private int timeout = 5000;  // ← Если один тест изменит — сломаются все
 
 public void setTimeout(int timeout) {
     this.timeout = timeout;  // ← Не потокобезопасно!
 }
+```
 Уровень: High
 Почему проблема: В параллельных тестах изменение timeout в одном тесте влияет на все остальные, вызывая flaky-тесты и сложные для отладки таймауты.
 ✅ Решение: Сделать состояние иммутабельным или использовать builder:
+```java
 public class UserApiClient {
     private final String baseUrl;
     private final Duration timeout;  // immutable
@@ -175,21 +182,26 @@ public class UserApiClient {
         }
     }
 }
-
+```
 // Использование в тесте:
+```java
 apiClient = new UserApiClient.Builder()
     .baseUrl("http://localhost:8080")
     .timeout(Duration.ofSeconds(10))
     .build();
+```
 3. Shared apiClient в BaseTest при параллельном запуске
 // ❌ ПРОБЛЕМА: Все тесты получают один и тот же экземпляр
+```java
 @BeforeEach
 void setUp() {
     apiClient = UserApiClient.getInstance("http://localhost:8080");  // ← Shared state!
 }
+```
 Уровень: Critical
 Почему проблема: При параллельном выполнении тесты могут конфликтовать: один тест меняет конфигурацию клиента, другой читает устаревшие данные. Особенно критично при тестировании разных окружений (staging/prod).
 ✅ Решение: Создавать новый экземпляр для каждого теста:
+```java
 @BeforeEach
 void setUp() {
     // Каждый тест получает изолированный клиент
@@ -200,6 +212,7 @@ void setUp() {
     driver = WebDriverManager.chromedriver().create();  // см. ниже
     driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 }
+```
 🎯 Итоговые рекомендации по рефакторингу
 Приоритет 1 (исправить немедленно):
 Убрать Singleton из UserApiClient — создать новый экземпляр на тест
@@ -229,6 +242,7 @@ void setUp() {
 4. Дефолтные значения в коде
 ✅ Реализация: Type-safe Config Helper
 // config/AppConfig.java
+```java
 public class AppConfig {
     
     // === API Configuration ===
@@ -350,11 +364,13 @@ public class AppConfig {
         }
     }
 }
-
+```
 // Кастомное исключение для конфигурации
+```java
 public class ConfigurationException extends RuntimeException {
     public ConfigurationException(String message) { super(message); }
 }
+```
 📁 Структура файлов конфигурации
 src/test/resources/config/
 ├── defaults.properties          # Базовые дефолты
@@ -388,6 +404,7 @@ browser.type=chrome
 
 🚀 Использование в тестах
 // BaseTest.java
+```java
 @BeforeEach
 void setUp() {
     // API Client с конфигурацией
@@ -404,6 +421,7 @@ void setUp() {
     }
     // ... другие браузеры
 }
+```
 🔄 Запуск с разными конфигурациями
 # Локально (использует defaults + local.properties)
 mvn test
@@ -429,6 +447,7 @@ docker run -e TEST_ENV=ci \
 Уровень 4: Транзакции/rollback (для БД-тестов)
 
 ✅ Уровень 1: Изоляция данных (предотвращение проблем)
+```java
 // TestDataProvider.java — генерация уникальных данных
 public class TestDataProvider {
     
@@ -458,8 +477,9 @@ void testUserCreation() {
     
     // Даже если тест упадёт — данные не конфликтуют с другими тестами
 }
-
+```
 ✅ Уровень 2: AutoCloseable паттерн для автоматического cleanup
+```java
 // TestResource.java — базовый интерфейс для ресурсов с cleanup
 public interface TestResource extends AutoCloseable {
     @Override
@@ -508,8 +528,9 @@ public class CreatedUser implements TestResource {
         }
     }
 }
+```
 Использование в тесте:
-
+```java
 @Test
 void testUserFlow() {
     // try-with-resources гарантирует cleanup даже при падении теста
@@ -533,8 +554,9 @@ void testUserRetention() {
     }
     // Пользователь останется в БД для ручной проверки
 }
-
+```
 ✅ Уровень 3: Fallback cleanup перед запуском тестов
+```java
 // TestCleanupService.java — очистка "мусора" от предыдущих запусков
 public class TestCleanupService {
     
@@ -565,7 +587,7 @@ public class TestCleanupService {
         }
     }
 }
-
+```
 // В базовом тесте:
 public class BaseApiTest {
     
@@ -584,6 +606,7 @@ public class BaseApiTest {
 
 ✅ Уровень 4: Транзакции и rollback (для тестов с прямым доступом к БД)
 
+```java
 // Если тесты работают напрямую с БД — используем транзакции
 
 // TestDatabaseExtension.java — JUnit 5 extension для транзакций
@@ -655,6 +678,7 @@ public class UserDatabaseTest implements DatabaseAware {
         // ← После теста всё автоматически откатится, данные не останутся
     }
 }
+```
 🎯 Итоговые рекомендации
 Для конфигурации:
 ✅ Используйте иерархию: defaults → env-specific properties → env vars → CLI
